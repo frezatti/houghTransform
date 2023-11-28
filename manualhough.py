@@ -3,43 +3,25 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-
-# The Hough Transform is a popular algorithm for detecting any shape that can
-# be represented in a parametric mathmatical form in binary images. This
-# usually means that images need to be thresholded or filtered prior to running
-# the Hough Transform.
-
-# read in shapes image and convert to grayscale
 shapes = cv2.imread('images/road.jpeg')
 cv2.imshow('Original Image', shapes)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 shapes_grayscale = cv2.cvtColor(shapes, cv2.COLOR_RGB2GRAY)
 
-# blur image (this will help clean up noise for Canny Edge Detection)
-# see Chapter 2.0 for Guassian Blur or check OpenCV documentation
 shapes_blurred = cv2.GaussianBlur(shapes_grayscale, (5, 5), 1.5)
 
-# find Canny Edges and show resulting image
 canny_edges = cv2.Canny(shapes_blurred, 100, 200)
 cv2.imshow('Canny Edges', canny_edges)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-########################################### HOUGH LINES FROM SCRATCH USING NUMPY
-# Step 1: The Hough transform needs a binary edges images.  For this particular
-# python file, I used the openCV built in Class Canny to create this edge image
-# from the original shapes.png file.
 
-# This is the function that will build the Hough Accumulator for the given image
 def hough_lines_acc(img, rho_resolution=1, theta_resolution=1):
-    ''' A function for creating a Hough Accumulator for lines in an image. '''
     height, width = img.shape # we need heigth and width to calculate the diag
     img_diagonal = np.ceil(np.sqrt(height**2 + width**2)) # a**2 + b**2 = c**2
     rhos = np.arange(-img_diagonal, img_diagonal + 1, rho_resolution)
     thetas = np.deg2rad(np.arange(-90, 90, theta_resolution))
 
-    # create the empty Hough Accumulator with dimensions equal to the size of
-    # rhos and thetas
     H = np.zeros((len(rhos), len(thetas)), dtype=np.uint64)
     y_idxs, x_idxs = np.nonzero(img) # find all edge (nonzero) pixel indexes
 
@@ -103,8 +85,6 @@ def plot_hough_acc(H, plot_title='Hough Accumulator Plot'):
 
 
 def hough_lines_draw(img, indicies, rhos, thetas):
-    ''' A function that takes indicies a rhos table and thetas table and draws
-        lines on the input images that correspond to these values. '''
     for i in range(len(indicies)):
         rho = rhos[indicies[i][0]]
         theta = thetas[indicies[i][1]]
@@ -118,9 +98,6 @@ def hough_lines_draw(img, indicies, rhos, thetas):
         y2 = int(y0 - 1000*(a))
 
         cv2.line(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-
-# run hough_lines_accumulator on the shapes canny_edges image
 H, rhos, thetas = hough_lines_acc(canny_edges)
 indicies, H = hough_peaks(H, 3, nhood_size=11) # find peaks
 plot_hough_acc(H) # plot hough space, brighter spots have higher votes
